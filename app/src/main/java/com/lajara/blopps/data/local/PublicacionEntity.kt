@@ -10,7 +10,6 @@ data class PublicacionEntity(
     val titulo: String,
     val cuerpo: String,
     val comunidad: String,
-    val esFavorita: Boolean = false,
     val peliculaId: Int? = null,
     val peliculaTitulo: String? = null,
     val posterPath: String? = null,

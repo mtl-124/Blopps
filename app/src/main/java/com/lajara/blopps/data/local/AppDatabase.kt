@@ -5,14 +5,20 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [PublicacionEntity::class], version = 1, exportSchema = false)
+@Database(
+    entities = [PublicacionEntity::class, FavoritoEntity::class],
+    version = 2,
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun publicacionDao(): PublicacionDao
 
     companion object {
         fun crear(context: Context): AppDatabase {
-            return Room.databaseBuilder(context, AppDatabase::class.java, "blopps.db").build()
+            return Room.databaseBuilder(context, AppDatabase::class.java, "blopps.db")
+                .fallbackToDestructiveMigration(dropAllTables = true)
+                .build()
         }
     }
 }
