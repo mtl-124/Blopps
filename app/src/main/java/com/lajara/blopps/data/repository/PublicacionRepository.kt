@@ -2,6 +2,7 @@ package com.lajara.blopps.data.repository
 
 import com.lajara.blopps.domain.model.Comunidad
 import com.lajara.blopps.domain.model.Publicacion
+import com.lajara.blopps.domain.model.PublicacionPopular
 import kotlinx.coroutines.flow.Flow
 
 interface PublicacionRepository {
@@ -13,5 +14,6 @@ interface PublicacionRepository {
     suspend fun cantidadGuardada(): Int
     suspend fun cantidadFavoritas(): Int
     suspend fun cantidadPorComunidad(): Map<Comunidad, Int>
+    suspend fun masFavoritas(limite: Int): List<PublicacionPopular>
     suspend fun limpiarCache()
 }

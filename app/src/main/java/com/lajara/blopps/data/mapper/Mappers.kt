@@ -18,7 +18,7 @@ fun PublicacionDto.aEntity(comunidad: Comunidad): PublicacionEntity {
     )
 }
 
-fun PublicacionEntity.aModelo(): Publicacion {
+fun PublicacionEntity.aModelo(esFavorita: Boolean = false): Publicacion {
     val pelicula = if (peliculaId != null && peliculaTitulo != null) {
         PeliculaInfo(
             id = peliculaId,
