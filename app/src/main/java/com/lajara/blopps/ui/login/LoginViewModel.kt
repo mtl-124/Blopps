@@ -36,7 +36,7 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel() {
 
     private fun restaurarSesion() {
         viewModelScope.launch {
-            val sesion = authRepository.obtenerSesionActual()
+            val sesion = authRepository.sesionActual()
             _uiState.update { it.copy(sesion = sesion, verificandoSesion = false) }
         }
     }

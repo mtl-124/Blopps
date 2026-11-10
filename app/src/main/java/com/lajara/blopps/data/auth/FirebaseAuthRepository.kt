@@ -12,9 +12,9 @@ class FirebaseAuthRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) : AuthRepository {
 
-    override suspend fun iniciarSesion(correo: String, contrasena: String): Result<Sesion> {
+    override suspend fun iniciarSesion(correo: String, clave: String): Result<Sesion> {
         return try {
-            val resultado = auth.signInWithEmailAndPassword(correo, contrasena).await()
+            val resultado = auth.signInWithEmailAndPassword(correo, clave).await()
             val usuario = resultado.user
                 ?: return Result.failure(IllegalStateException("Usuario no disponible"))
             Result.success(construirSesion(usuario.uid, usuario.email ?: correo))
@@ -25,7 +25,7 @@ class FirebaseAuthRepository(
         }
     }
 
-    override suspend fun obtenerSesionActual(): Sesion? {
+    override suspend fun sesionActual(): Sesion? {
         val usuario = auth.currentUser ?: return null
         val correo = usuario.email.orEmpty()
         return try {
