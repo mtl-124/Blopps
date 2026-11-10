@@ -1,21 +1,17 @@
 package com.lajara.blopps.data.repository
 
 import com.lajara.blopps.domain.model.Comunidad
-import com.lajara.blopps.domain.model.Movie
+import com.lajara.blopps.domain.model.Publicacion
 import kotlinx.coroutines.flow.Flow
 
-data class ResultadoPeliculas(
-    val peliculas: List<Movie>,
-    val desdeCache: Boolean
-)
-
-interface MovieRepository {
-    suspend fun obtenerPeliculas(comunidad: Comunidad): Result<ResultadoPeliculas>
-    suspend fun obtenerDetalle(id: String): Result<Movie>
-    suspend fun sincronizar(comunidad: Comunidad): Result<Int>
-    suspend fun alternarFavorito(id: String)
-    fun observarFavoritos(): Flow<List<Movie>>
-    fun observarConteoPorComunidad(): Flow<Map<Comunidad, Int>>
-    fun observarTotalFavoritos(): Flow<Int>
+interface PublicacionRepository {
+    fun publicaciones(comunidad: Comunidad): Flow<List<Publicacion>>
+    val favoritas: Flow<List<Publicacion>>
+    suspend fun refrescar(comunidad: Comunidad): Result<Int>
+    suspend fun obtenerDetalle(id: Int): Result<Publicacion>
+    suspend fun alternarFavorita(id: Int)
+    suspend fun cantidadGuardada(): Int
+    suspend fun cantidadFavoritas(): Int
+    suspend fun cantidadPorComunidad(): Map<Comunidad, Int>
     suspend fun limpiarCache()
 }
