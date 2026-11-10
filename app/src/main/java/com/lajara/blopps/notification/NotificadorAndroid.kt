@@ -4,13 +4,15 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import com.lajara.blopps.domain.model.Comunidad
+import com.lajara.blopps.MainActivity
 
 class NotificadorAndroid(private val context: Context) : Notificador {
 
@@ -25,7 +27,7 @@ class NotificadorAndroid(private val context: Context) : Notificador {
                 "Sincronización",
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "Avisos cuando se actualiza el catálogo de películas"
+                description = "Avisos cuando se actualizan las publicaciones"
             }
             val manager = context.getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(canal)
@@ -41,12 +43,22 @@ class NotificadorAndroid(private val context: Context) : Notificador {
     }
 
     @SuppressLint("MissingPermission")
-    override fun notificarSincronizacion(cantidad: Int, comunidad: Comunidad) {
+    override fun mostrar(titulo: String, texto: String) {
         if (!tienePermiso()) return
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val pendiente = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
         val notificacion = NotificationCompat.Builder(context, CANAL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("Blopps")
-            .setContentText("Se actualizaron $cantidad películas de la comunidad ${comunidad.titulo}")
+            .setContentTitle(titulo)
+            .setContentText(texto)
+            .setContentIntent(pendiente)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .build()
