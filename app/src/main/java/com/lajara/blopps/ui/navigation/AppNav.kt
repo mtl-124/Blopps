@@ -42,6 +42,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.lajara.blopps.AppContainer
+import com.lajara.blopps.domain.model.Comunidad
 import com.lajara.blopps.domain.model.Rol
 import com.lajara.blopps.domain.model.Sesion
 import com.lajara.blopps.ui.admin.AdminScreen
@@ -49,6 +50,8 @@ import com.lajara.blopps.ui.admin.AdminViewModel
 import com.lajara.blopps.ui.comunidades.ComunidadesScreen
 import com.lajara.blopps.ui.comunidades.PublicacionesViewModel
 import com.lajara.blopps.ui.components.CargandoView
+import com.lajara.blopps.ui.crear.CrearPublicacionScreen
+import com.lajara.blopps.ui.crear.CrearPublicacionViewModel
 import com.lajara.blopps.ui.detalle.DetallePublicacionScreen
 import com.lajara.blopps.ui.detalle.DetalleViewModel
 import com.lajara.blopps.ui.detalle.ResenasViewModel
@@ -67,8 +70,11 @@ object Rutas {
     const val PANEL = "panel"
     const val PERFIL = "perfil"
     const val DETALLE = "detalle/{id}"
+    const val CREAR = "crear?comunidad={comunidad}"
 
     fun detalle(id: Int): String = "detalle/$id"
+    fun crear(comunidad: Comunidad? = null): String =
+        if (comunidad != null) "crear?comunidad=${comunidad.name}" else "crear"
 }
 
 private data class DestinoBarra(
@@ -131,7 +137,7 @@ private fun PrincipalScreen(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            if (rutaActual != Rutas.DETALLE) {
+            if (rutaActual != Rutas.DETALLE && !rutaActual.orEmpty().startsWith("crear")) {
                 BarraInferior(
                     destinos = destinos,
                     rutaActual = rutaActual,
@@ -148,7 +154,26 @@ private fun PrincipalScreen(
             composable(Rutas.INICIO) {
                 val viewModel: PublicacionesViewModel =
                     viewModel(factory = container.viewModelFactory)
-                ComunidadesScreen(viewModel = viewModel, onAbrirDetalle = abrirDetalle)
+                ComunidadesScreen(
+                    viewModel = viewModel,
+                    onAbrirDetalle = abrirDetalle,
+                    onCrear = { comunidad -> navController.navigate(Rutas.crear(comunidad)) }
+                )
+            }
+            composable(
+                route = Rutas.CREAR,
+                arguments = listOf(navArgument("comunidad") { type = NavType.StringType; nullable = true; defaultValue = null })
+            ) { entry ->
+                val comunidadStr = entry.arguments?.getString("comunidad")
+                val comunidadInicial = comunidadStr?.let { s -> Comunidad.entries.firstOrNull { it.name == s } }
+                val viewModel: CrearPublicacionViewModel =
+                    viewModel(factory = container.viewModelFactory)
+                CrearPublicacionScreen(
+                    sesion = sesion,
+                    viewModel = viewModel,
+                    comunidadInicial = comunidadInicial,
+                    onAtras = { navController.popBackStack() }
+                )
             }
             composable(
                 route = Rutas.DETALLE,

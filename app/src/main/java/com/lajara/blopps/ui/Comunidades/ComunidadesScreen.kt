@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -21,18 +22,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Mood
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -72,7 +73,8 @@ import com.lajara.blopps.ui.theme.BloppsVerde
 fun ComunidadesScreen(
     viewModel: PublicacionesViewModel,
     modifier: Modifier = Modifier,
-    onAbrirDetalle: (Int) -> Unit = {}
+    onAbrirDetalle: (Int) -> Unit = {},
+    onCrear: (Comunidad) -> Unit = {}
 ) {
     val comunidad by viewModel.comunidad.collectAsStateWithLifecycle()
     val estado by viewModel.estado.collectAsStateWithLifecycle()
@@ -91,8 +93,10 @@ fun ComunidadesScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize().statusBarsPadding(),
-            contentPadding = PaddingValues(bottom = 96.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding(),
+            contentPadding = PaddingValues(bottom = 112.dp)
         ) {
             item {
                 Encabezado(
@@ -156,6 +160,18 @@ fun ComunidadesScreen(
                 }
             }
         }
+
+        ExtendedFloatingActionButton(
+            onClick = { onCrear(comunidad) },
+            icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+            text = { Text("Nueva publicación", fontWeight = FontWeight.Bold) },
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .navigationBarsPadding()
+        )
     }
 }
 

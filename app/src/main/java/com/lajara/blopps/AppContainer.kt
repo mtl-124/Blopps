@@ -21,6 +21,7 @@ import com.lajara.blopps.notification.Notificador
 import com.lajara.blopps.notification.NotificadorAndroid
 import com.lajara.blopps.ui.admin.AdminViewModel
 import com.lajara.blopps.ui.comunidades.PublicacionesViewModel
+import com.lajara.blopps.ui.crear.CrearPublicacionViewModel
 import com.lajara.blopps.ui.detalle.DetalleViewModel
 import com.lajara.blopps.ui.detalle.ResenasViewModel
 import com.lajara.blopps.ui.favoritos.FavoritosViewModel
@@ -66,5 +67,6 @@ class AppContainer(context: Context) {
         initializer { FavoritosViewModel(publicacionRepository) }
         initializer { AdminViewModel(publicacionRepository, notificador) }
         initializer { PerfilViewModel(authRepository, publicacionRepository) }
+        initializer { CrearPublicacionViewModel(peliculaRepository, publicacionUsuarioRepository) }
     }
 }
