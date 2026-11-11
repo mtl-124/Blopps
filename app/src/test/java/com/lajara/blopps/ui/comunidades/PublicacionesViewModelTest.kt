@@ -20,6 +20,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import com.lajara.blopps.domain.model.PublicacionPopular
 
 private fun publicacion(id: Int, favorita: Boolean = false) = Publicacion(
     id = id,
@@ -32,6 +33,8 @@ private fun publicacion(id: Int, favorita: Boolean = false) = Publicacion(
 )
 
 private class RepositorioFalso : PublicacionRepository {
+
+    override suspend fun masFavoritas(limite: Int): List<PublicacionPopular> = emptyList()
     val datos = MutableStateFlow<List<Publicacion>>(emptyList())
     var remotas: List<Publicacion> = emptyList()
     var falla: Throwable? = null

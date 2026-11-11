@@ -10,6 +10,8 @@ import com.lajara.blopps.data.auth.FirebaseAuthRepository
 import com.lajara.blopps.data.local.AppDatabase
 import com.lajara.blopps.data.remote.RetrofitClient
 import com.lajara.blopps.data.repository.FirestoreResenaRepository
+import com.lajara.blopps.data.repository.PeliculaRepository
+import com.lajara.blopps.data.repository.PeliculaRepositoryImpl
 import com.lajara.blopps.data.repository.PublicacionRepository
 import com.lajara.blopps.data.repository.PublicacionRepositoryImpl
 import com.lajara.blopps.data.repository.ResenaRepository
@@ -40,6 +42,10 @@ class AppContainer(context: Context) {
             dao = baseDeDatos.publicacionDao(),
             uidActual = { FirebaseAuth.getInstance().currentUser?.uid }
         )
+    }
+
+    val peliculaRepository: PeliculaRepository by lazy {
+        PeliculaRepositoryImpl(RetrofitClient.peliculas)
     }
 
 

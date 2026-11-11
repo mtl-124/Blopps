@@ -19,4 +19,10 @@ interface MovieApiService {
         @Path("id") id: Int,
         @Query("append_to_response") adicional: String = "credits"
     ): MovieDetailDto
+
+    @GET("search/movie")
+    suspend fun buscar(
+        @Query("query") texto: String,
+        @Query("page") pagina: Int = 1
+    ): MovieListResponseDto
 }
