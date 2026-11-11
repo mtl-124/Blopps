@@ -85,6 +85,28 @@ Flujo de sincronización (`refrescar`):
 
 Kotlin · Jetpack Compose · Material 3 · Navigation Compose · Retrofit + kotlinx-serialization · Room (KSP) · Firebase Authentication · Cloud Firestore · Coil · Coroutines y Flow · JUnit.
 
+## Mejoras con IA (Fase 2)
+
+Se han incorporado las siguientes mejoras avanzadas en la aplicación:
+
+1. **Creación de publicaciones de usuarios con TMDB:** Los usuarios pueden crear reseñas propias buscando películas oficiales directamente desde la API de TMDB.
+2. **Sistema social en tiempo real:** Comentarios en hilos (con respuestas de un solo nivel y manejo de huérfanos), "me gusta" instantáneos y cálculo de calificación promedio comunitaria.
+3. **Rediseño visual (UI/UX) y animaciones:** Interfaz pulida con Material 3, tarjetas inmersivas, efecto shimmer de carga, FAB con scroll reactivo y transiciones de navegación fluidas.
+
+### Arquitectura de las Nuevas Funcionalidades
+- **Independencia de Room:** Las publicaciones de usuarios (`PublicacionUsuario`) no tocan Room; se gestionan de manera independiente a través de Cloud Firestore utilizando repositorios dedicados (`PublicacionUsuarioRepository`, `SocialRepository`) y ViewModels específicos (`CrearPublicacionViewModel`, `DetallePublicacionUsuarioViewModel`, `SocialViewModel`).
+- **Estructura de Firestore:**
+  - `publicaciones_usuarios/{id}`: `comunidad`, `autorUid`, `autorCorreo`, `titulo`, `resena`, `calificacion`, `peliculaId`, `peliculaTitulo`, `posterUrl`, `anio`, `fecha`.
+  - `publicaciones_usuarios/{id}/comentarios/{comentarioId}`: `autorUid`, `autorCorreo`, `texto`, `fecha`, `respuestaA`.
+  - `publicaciones_usuarios/{id}/votos/{uid}`: `valor` (1..5).
+  - `publicaciones_usuarios/{id}/likes/{uid}`: `existe` (true).
+- **Despliegue de Reglas de Seguridad:** Las reglas de Cloud Firestore se encuentran en el archivo `firestore.rules` en la raíz del proyecto y deben copiarse y publicarse en la consola de Firebase (Firestore Database → Reglas).
+- **TMDB Opcional:** La búsqueda de películas requiere `TMDB_API_KEY` en `local.properties`. Si no se provee, la app degrada la funcionalidad de búsqueda de forma limpia sin afectar el resto de la aplicación.
+- **Ejecución de Pruebas:** El proyecto cuenta con un conjunto amplio de 42 pruebas unitarias (incluyendo validaciones, armado de hilos, repositorios y ViewModels) que se ejecutan con:
+  ```bash
+  ./gradlew test
+  ```
+
 ## Cómo ejecutar el proyecto
 
 **Requisitos:** Android Studio reciente, JDK 11 o superior y un dispositivo o emulador con Android 7.0 (API 24) o superior.
@@ -105,18 +127,11 @@ Kotlin · Jetpack Compose · Material 3 · Navigation Compose · Retrofit + kotl
 
 ## Pruebas
 
-Pruebas unitarias de `PublicacionesViewModel` con un repositorio y un notificador falsos:
+Pruebas unitarias ejecutadas con JUnit y Coroutines Test:
 
 ```bash
 ./gradlew test
 ```
-
-Casos cubiertos:
-- lista y notificación al refrescar con datos;
-- error sin conexión y sin datos guardados;
-- lista con aviso sin conexión cuando hay datos guardados;
-- estado vacío;
-- reintento después de un error.
 
 ## Autor
 
