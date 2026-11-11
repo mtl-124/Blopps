@@ -3,21 +3,27 @@ package com.lajara.blopps.ui.comunidades
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lajara.blopps.data.repository.PublicacionRepository
+import com.lajara.blopps.data.repository.PublicacionUsuarioRepository
 import com.lajara.blopps.domain.model.Comunidad
 import com.lajara.blopps.domain.model.Publicacion
+import com.lajara.blopps.domain.model.PublicacionUsuario
 import com.lajara.blopps.notification.Notificador
 import com.lajara.blopps.ui.UiState
 import com.lajara.blopps.ui.mensajeDeError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PublicacionesViewModel(
     private val repo: PublicacionRepository,
+    private val publicacionUsuarioRepo: PublicacionUsuarioRepository,
     private val notificador: Notificador
 ) : ViewModel() {
 
@@ -26,6 +32,15 @@ class PublicacionesViewModel(
 
     private val _estado = MutableStateFlow<UiState<List<Publicacion>>>(UiState.Cargando)
     val estado: StateFlow<UiState<List<Publicacion>>> = _estado.asStateFlow()
+
+    val deUsuarios: StateFlow<List<PublicacionUsuario>> = _comunidad
+        .flatMapLatest { publicacionUsuarioRepo.publicaciones(it) }
+        .catch { emit(emptyList()) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
 
     private val _aviso = MutableStateFlow<String?>(null)
     val aviso: StateFlow<String?> = _aviso.asStateFlow()

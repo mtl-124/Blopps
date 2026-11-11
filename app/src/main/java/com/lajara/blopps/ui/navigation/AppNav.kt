@@ -52,6 +52,8 @@ import com.lajara.blopps.ui.comunidades.PublicacionesViewModel
 import com.lajara.blopps.ui.components.CargandoView
 import com.lajara.blopps.ui.crear.CrearPublicacionScreen
 import com.lajara.blopps.ui.crear.CrearPublicacionViewModel
+import com.lajara.blopps.ui.detalle.DetallePublicacionUsuarioScreen
+import com.lajara.blopps.ui.detalle.DetallePublicacionUsuarioViewModel
 import com.lajara.blopps.ui.detalle.DetallePublicacionScreen
 import com.lajara.blopps.ui.detalle.DetalleViewModel
 import com.lajara.blopps.ui.detalle.ResenasViewModel
@@ -71,10 +73,12 @@ object Rutas {
     const val PERFIL = "perfil"
     const val DETALLE = "detalle/{id}"
     const val CREAR = "crear?comunidad={comunidad}"
+    const val DETALLE_USUARIO = "usuario/{id}"
 
     fun detalle(id: Int): String = "detalle/$id"
     fun crear(comunidad: Comunidad? = null): String =
         if (comunidad != null) "crear?comunidad=${comunidad.name}" else "crear"
+    fun detalleUsuario(id: String): String = "usuario/$id"
 }
 
 private data class DestinoBarra(
@@ -132,12 +136,15 @@ private fun PrincipalScreen(
     val abrirDetalle: (Int) -> Unit = { id ->
         navController.navigate(Rutas.detalle(id)) { launchSingleTop = true }
     }
+    val abrirDetalleUsuario: (String) -> Unit = { id ->
+        navController.navigate(Rutas.detalleUsuario(id)) { launchSingleTop = true }
+    }
 
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            if (rutaActual != Rutas.DETALLE && !rutaActual.orEmpty().startsWith("crear")) {
+            if (rutaActual != Rutas.DETALLE && !rutaActual.orEmpty().startsWith("crear") && !rutaActual.orEmpty().startsWith("usuario")) {
                 BarraInferior(
                     destinos = destinos,
                     rutaActual = rutaActual,
@@ -157,6 +164,7 @@ private fun PrincipalScreen(
                 ComunidadesScreen(
                     viewModel = viewModel,
                     onAbrirDetalle = abrirDetalle,
+                    onAbrirDetalleUsuario = abrirDetalleUsuario,
                     onCrear = { comunidad -> navController.navigate(Rutas.crear(comunidad)) }
                 )
             }
@@ -172,6 +180,20 @@ private fun PrincipalScreen(
                     sesion = sesion,
                     viewModel = viewModel,
                     comunidadInicial = comunidadInicial,
+                    onAtras = { navController.popBackStack() }
+                )
+            }
+            composable(
+                route = Rutas.DETALLE_USUARIO,
+                arguments = listOf(navArgument("id") { type = NavType.StringType })
+            ) { entry ->
+                val id = entry.arguments?.getString("id").orEmpty()
+                val viewModel: DetallePublicacionUsuarioViewModel =
+                    viewModel(factory = container.viewModelFactory)
+                DetallePublicacionUsuarioScreen(
+                    sesion = sesion,
+                    id = id,
+                    viewModel = viewModel,
                     onAtras = { navController.popBackStack() }
                 )
             }

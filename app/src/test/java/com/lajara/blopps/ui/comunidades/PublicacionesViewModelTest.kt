@@ -1,14 +1,21 @@
 package com.lajara.blopps.ui.comunidades
 
 import com.lajara.blopps.data.repository.PublicacionRepository
+import com.lajara.blopps.data.repository.PublicacionUsuarioRepository
 import com.lajara.blopps.domain.model.Comunidad
+import com.lajara.blopps.domain.model.PeliculaBusqueda
 import com.lajara.blopps.domain.model.Publicacion
+import com.lajara.blopps.domain.model.PublicacionPopular
+import com.lajara.blopps.domain.model.PublicacionUsuario
+import com.lajara.blopps.domain.model.Sesion
 import com.lajara.blopps.notification.Notificador
 import com.lajara.blopps.ui.UiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -20,7 +27,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
-import com.lajara.blopps.domain.model.PublicacionPopular
 
 private fun publicacion(id: Int, favorita: Boolean = false) = Publicacion(
     id = id,
@@ -76,6 +82,31 @@ private class RepositorioFalso : PublicacionRepository {
     }
 }
 
+private class PublicacionUsuarioRepoFalso : PublicacionUsuarioRepository {
+    var publicacionesRetornadas = listOf<PublicacionUsuario>()
+    var debeLanzarError = false
+
+    override fun publicaciones(comunidad: Comunidad): Flow<List<PublicacionUsuario>> {
+        if (debeLanzarError) {
+            return flow { throw IOException("Error Firestore") }
+        }
+        return flowOf(publicacionesRetornadas.filter { it.comunidad == comunidad })
+    }
+
+    override fun publicacion(id: String): Flow<PublicacionUsuario?> = flowOf(null)
+
+    override suspend fun crear(
+        sesion: Sesion,
+        comunidad: Comunidad,
+        titulo: String,
+        resena: String,
+        calificacion: Int,
+        pelicula: PeliculaBusqueda
+    ): Result<String> = Result.success("1")
+
+    override suspend fun eliminar(id: String): Result<Unit> = Result.success(Unit)
+}
+
 private class NotificadorFalso : Notificador {
     val mensajes = mutableListOf<String>()
 
@@ -88,12 +119,14 @@ private class NotificadorFalso : Notificador {
 class PublicacionesViewModelTest {
 
     private lateinit var repo: RepositorioFalso
+    private lateinit var publicacionUsuarioRepo: PublicacionUsuarioRepoFalso
     private lateinit var notificador: NotificadorFalso
 
     @Before
     fun preparar() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         repo = RepositorioFalso()
+        publicacionUsuarioRepo = PublicacionUsuarioRepoFalso()
         notificador = NotificadorFalso()
     }
 
@@ -106,7 +139,7 @@ class PublicacionesViewModelTest {
     fun alRefrescarConDatosMuestraListaYNotifica() {
         repo.remotas = listOf(publicacion(1), publicacion(2))
 
-        val vm = PublicacionesViewModel(repo, notificador)
+        val vm = PublicacionesViewModel(repo, publicacionUsuarioRepo, notificador)
 
         val estado = vm.estado.value
         assertTrue(estado is UiState.Exito)
@@ -118,7 +151,7 @@ class PublicacionesViewModelTest {
     fun sinConexionYSinDatosGuardadosMuestraError() {
         repo.falla = IOException()
 
-        val vm = PublicacionesViewModel(repo, notificador)
+        val vm = PublicacionesViewModel(repo, publicacionUsuarioRepo, notificador)
 
         val estado = vm.estado.value
         assertTrue(estado is UiState.Error)
@@ -131,7 +164,7 @@ class PublicacionesViewModelTest {
         repo.datos.value = listOf(publicacion(1))
         repo.falla = IOException()
 
-        val vm = PublicacionesViewModel(repo, notificador)
+        val vm = PublicacionesViewModel(repo, publicacionUsuarioRepo, notificador)
 
         assertTrue(vm.estado.value is UiState.Exito)
         assertNotNull(vm.aviso.value)
@@ -141,7 +174,7 @@ class PublicacionesViewModelTest {
     fun siNoHayPublicacionesMuestraEstadoVacio() {
         repo.remotas = emptyList()
 
-        val vm = PublicacionesViewModel(repo, notificador)
+        val vm = PublicacionesViewModel(repo, publicacionUsuarioRepo, notificador)
 
         assertTrue(vm.estado.value is UiState.Vacio)
     }
@@ -149,12 +182,45 @@ class PublicacionesViewModelTest {
     @Test
     fun reintentarDespuesDeUnErrorCargaLosDatos() {
         repo.falla = IOException()
-        val vm = PublicacionesViewModel(repo, notificador)
+        val vm = PublicacionesViewModel(repo, publicacionUsuarioRepo, notificador)
         repo.falla = null
         repo.remotas = listOf(publicacion(1))
 
         vm.refrescar()
 
         assertTrue(vm.estado.value is UiState.Exito)
+    }
+
+    @Test
+    fun deUsuariosReflejaListaDeRepositorioFalso() {
+        val pubUsuario = PublicacionUsuario(
+            id = "u1",
+            comunidad = Comunidad.ACCION,
+            autorUid = "user1",
+            autorCorreo = "user1@test.com",
+            titulo = "Gran peli de acción",
+            resena = "Una reseña muy larga sobre la película de acción.",
+            calificacion = 5,
+            peliculaId = 1,
+            peliculaTitulo = "Action Movie",
+            posterUrl = null,
+            anio = 2023,
+            fecha = System.currentTimeMillis()
+        )
+        publicacionUsuarioRepo.publicacionesRetornadas = listOf(pubUsuario)
+
+        val vm = PublicacionesViewModel(repo, publicacionUsuarioRepo, notificador)
+
+        assertEquals(1, vm.deUsuarios.value.size)
+        assertEquals("Gran peli de acción", vm.deUsuarios.value.first().titulo)
+    }
+
+    @Test
+    fun siRepositorioFallaDeUsuariosEsListaVacia() {
+        publicacionUsuarioRepo.debeLanzarError = true
+
+        val vm = PublicacionesViewModel(repo, publicacionUsuarioRepo, notificador)
+
+        assertTrue(vm.deUsuarios.value.isEmpty())
     }
 }

@@ -14,14 +14,15 @@ import com.lajara.blopps.data.repository.FirestoreResenaRepository
 import com.lajara.blopps.data.repository.PeliculaRepository
 import com.lajara.blopps.data.repository.PeliculaRepositoryImpl
 import com.lajara.blopps.data.repository.PublicacionRepository
-import com.lajara.blopps.data.repository.PublicacionUsuarioRepository
 import com.lajara.blopps.data.repository.PublicacionRepositoryImpl
+import com.lajara.blopps.data.repository.PublicacionUsuarioRepository
 import com.lajara.blopps.data.repository.ResenaRepository
 import com.lajara.blopps.notification.Notificador
 import com.lajara.blopps.notification.NotificadorAndroid
 import com.lajara.blopps.ui.admin.AdminViewModel
 import com.lajara.blopps.ui.comunidades.PublicacionesViewModel
 import com.lajara.blopps.ui.crear.CrearPublicacionViewModel
+import com.lajara.blopps.ui.detalle.DetallePublicacionUsuarioViewModel
 import com.lajara.blopps.ui.detalle.DetalleViewModel
 import com.lajara.blopps.ui.detalle.ResenasViewModel
 import com.lajara.blopps.ui.favoritos.FavoritosViewModel
@@ -55,18 +56,17 @@ class AppContainer(context: Context) {
         FirestorePublicacionUsuarioRepository()
     }
 
-
-
     val resenaRepository: ResenaRepository by lazy { FirestoreResenaRepository() }
 
     val viewModelFactory: ViewModelProvider.Factory = viewModelFactory {
         initializer { LoginViewModel(authRepository) }
-        initializer { PublicacionesViewModel(publicacionRepository, notificador) }
+        initializer { PublicacionesViewModel(publicacionRepository, publicacionUsuarioRepository, notificador) }
         initializer { DetalleViewModel(publicacionRepository) }
         initializer { ResenasViewModel(resenaRepository) }
         initializer { FavoritosViewModel(publicacionRepository) }
         initializer { AdminViewModel(publicacionRepository, notificador) }
         initializer { PerfilViewModel(authRepository, publicacionRepository) }
         initializer { CrearPublicacionViewModel(peliculaRepository, publicacionUsuarioRepository) }
+        initializer { DetallePublicacionUsuarioViewModel(publicacionUsuarioRepository) }
     }
 }

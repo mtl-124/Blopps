@@ -65,6 +65,7 @@ import com.lajara.blopps.ui.components.BloppsWordmark
 import com.lajara.blopps.ui.components.CargandoView
 import com.lajara.blopps.ui.components.ErrorView
 import com.lajara.blopps.ui.components.PublicacionCard
+import com.lajara.blopps.ui.components.PublicacionUsuarioCard
 import com.lajara.blopps.ui.components.VacioView
 import com.lajara.blopps.ui.theme.BloppsDorado
 import com.lajara.blopps.ui.theme.BloppsVerde
@@ -74,11 +75,13 @@ fun ComunidadesScreen(
     viewModel: PublicacionesViewModel,
     modifier: Modifier = Modifier,
     onAbrirDetalle: (Int) -> Unit = {},
+    onAbrirDetalleUsuario: (String) -> Unit = {},
     onCrear: (Comunidad) -> Unit = {}
 ) {
     val comunidad by viewModel.comunidad.collectAsStateWithLifecycle()
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val aviso by viewModel.aviso.collectAsStateWithLifecycle()
+    val deUsuarios by viewModel.deUsuarios.collectAsStateWithLifecycle()
     var buscando by rememberSaveable { mutableStateOf(false) }
     var consulta by rememberSaveable { mutableStateOf("") }
 
@@ -117,6 +120,33 @@ fun ComunidadesScreen(
                     onSeleccionar = viewModel::seleccionarComunidad
                 )
             }
+
+            if (deUsuarios.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "De la comunidad",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+                items(deUsuarios, key = { "u_${it.id}" }) { pub ->
+                    PublicacionUsuarioCard(
+                        publicacion = pub,
+                        onClick = { onAbrirDetalleUsuario(pub.id) },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 7.dp)
+                    )
+                }
+                item {
+                    Text(
+                        text = "Publicaciones",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+            }
+
             when (val actual = estado) {
                 is UiState.Cargando -> item {
                     Box(Modifier.fillParentMaxHeight(0.7f)) { CargandoView() }
@@ -286,52 +316,6 @@ private fun SelectorComunidades(
                     )
                     Text(text = comunidad.titulo, fontWeight = FontWeight.SemiBold)
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ListaPublicaciones(
-    publicaciones: List<Publicacion>,
-    consulta: String,
-    onAbrir: (Int) -> Unit,
-    onFavorita: (Int) -> Unit
-) {
-    val visibles = remember(publicaciones, consulta) {
-        if (consulta.isBlank()) {
-            publicaciones
-        } else {
-            publicaciones.filter { p ->
-                p.titulo.contains(consulta, ignoreCase = true) ||
-                        p.cuerpo.contains(consulta, ignoreCase = true) ||
-                        p.pelicula?.titulo?.contains(consulta, ignoreCase = true) == true
-            }
-        }
-    }
-
-    if (visibles.isEmpty()) {
-        VacioView(
-            titulo = "Sin resultados",
-            descripcion = "Prueba con otra palabra",
-            icono = Icons.Filled.SearchOff
-        )
-    } else {
-        LazyColumn(
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 4.dp,
-                bottom = 96.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            items(visibles, key = { it.id }) { publicacion ->
-                PublicacionCard(
-                    publicacion = publicacion,
-                    onClick = { onAbrir(publicacion.id) },
-                    onFavorita = { onFavorita(publicacion.id) }
-                )
             }
         }
     }
