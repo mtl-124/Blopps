@@ -1,5 +1,6 @@
 package com.lajara.blopps.ui.crear
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -342,21 +343,23 @@ fun CrearPublicacionScreen(
 
             Spacer(Modifier.height(8.dp))
 
-            // Botón Publicar
+            // Botón Publicar con AnimatedContent
             Button(
                 onClick = { viewModel.publicar(sesion) },
                 enabled = !estado.publicando,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp)
             ) {
-                if (estado.publicando) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text("Publicar", fontWeight = FontWeight.Bold)
+                AnimatedContent(targetState = estado.publicando, label = "boton_publicar") { publicando ->
+                    if (publicando) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Publicar", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }

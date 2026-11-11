@@ -1,5 +1,13 @@
 package com.lajara.blopps.ui.comunidades
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -18,6 +26,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,6 +51,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,11 +68,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lajara.blopps.domain.model.Comunidad
-import com.lajara.blopps.domain.model.Publicacion
 import com.lajara.blopps.ui.UiState
 import com.lajara.blopps.ui.components.BloppsIcono
 import com.lajara.blopps.ui.components.BloppsWordmark
-import com.lajara.blopps.ui.components.CargandoView
+import com.lajara.blopps.ui.components.CargandoShimmer
 import com.lajara.blopps.ui.components.ErrorView
 import com.lajara.blopps.ui.components.PublicacionCard
 import com.lajara.blopps.ui.components.PublicacionUsuarioCard
@@ -84,6 +93,28 @@ fun ComunidadesScreen(
     val deUsuarios by viewModel.deUsuarios.collectAsStateWithLifecycle()
     var buscando by rememberSaveable { mutableStateOf(false) }
     var consulta by rememberSaveable { mutableStateOf("") }
+    val listState = rememberLazyListState()
+
+    val isScrollingUp = remember {
+        var previousIndex = listState.firstVisibleItemIndex
+        var previousScrollOffset = listState.firstVisibleItemScrollOffset
+        derivedStateOf {
+            if (listState.layoutInfo.totalItemsCount <= 2) {
+                true
+            } else {
+                val currentIndex = listState.firstVisibleItemIndex
+                val currentOffset = listState.firstVisibleItemScrollOffset
+                val scrollingUp = if (currentIndex != previousIndex) {
+                    currentIndex < previousIndex
+                } else {
+                    currentOffset < previousScrollOffset
+                }
+                previousIndex = currentIndex
+                previousScrollOffset = currentOffset
+                scrollingUp
+            }
+        }
+    }.value
 
     val visibles = remember(estado, consulta) {
         val lista = (estado as? UiState.Exito)?.data.orEmpty()
@@ -96,12 +127,13 @@ fun ComunidadesScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding(),
             contentPadding = PaddingValues(bottom = 112.dp)
         ) {
-            item {
+            item(key = "encabezado") {
                 Encabezado(
                     buscando = buscando,
                     onBuscar = {
@@ -110,11 +142,11 @@ fun ComunidadesScreen(
                     }
                 )
             }
-            item {
+            item(key = "titulos_busqueda") {
                 if (buscando) CampoBusqueda(valor = consulta, onCambio = { consulta = it })
                 else Titulos()
             }
-            item {
+            item(key = "selector") {
                 SelectorComunidades(
                     seleccionada = comunidad,
                     onSeleccionar = viewModel::seleccionarComunidad
@@ -122,7 +154,7 @@ fun ComunidadesScreen(
             }
 
             if (deUsuarios.isNotEmpty()) {
-                item {
+                item(key = "titulo_de_usuarios") {
                     Text(
                         text = "De la comunidad",
                         style = MaterialTheme.typography.titleLarge,
@@ -134,10 +166,12 @@ fun ComunidadesScreen(
                     PublicacionUsuarioCard(
                         publicacion = pub,
                         onClick = { onAbrirDetalleUsuario(pub.id) },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 7.dp)
+                        modifier = Modifier
+                            .animateItem()
+                            .padding(horizontal = 16.dp, vertical = 7.dp)
                     )
                 }
-                item {
+                item(key = "titulo_publicaciones") {
                     Text(
                         text = "Publicaciones",
                         style = MaterialTheme.typography.titleLarge,
@@ -147,61 +181,63 @@ fun ComunidadesScreen(
                 }
             }
 
-            when (val actual = estado) {
-                is UiState.Cargando -> item {
-                    Box(Modifier.fillParentMaxHeight(0.7f)) { CargandoView() }
-                }
-                is UiState.Error -> item {
-                    Box(Modifier.fillParentMaxHeight(0.7f)) {
-                        ErrorView(mensaje = actual.mensaje, onReintentar = viewModel::refrescar)
-                    }
-                }
-                is UiState.Vacio -> item {
-                    Box(Modifier.fillParentMaxHeight(0.7f)) {
-                        VacioView(
+            item(key = "estado_contenido") {
+                AnimatedContent(
+                    targetState = estado,
+                    transitionSpec = { fadeIn(animationSpec = tween(250)) togetherWith fadeOut(animationSpec = tween(250)) },
+                    label = "estado_contenido_anim"
+                ) { actual ->
+                    when (actual) {
+                        is UiState.Cargando -> CargandoShimmer()
+                        is UiState.Error -> ErrorView(mensaje = actual.mensaje, onReintentar = viewModel::refrescar)
+                        is UiState.Vacio -> VacioView(
                             titulo = "Aún no hay reseñas",
                             descripcion = "Toca actualizar para traer las de ${comunidad.titulo}",
                             icono = Icons.Filled.Inbox
                         )
-                    }
-                }
-                is UiState.Exito -> {
-                    if (visibles.isEmpty()) {
-                        item {
-                            Box(Modifier.fillParentMaxHeight(0.7f)) {
+                        is UiState.Exito -> {
+                            if (visibles.isEmpty()) {
                                 VacioView(
                                     titulo = "Sin resultados",
                                     descripcion = "Prueba con otra palabra",
                                     icono = Icons.Filled.SearchOff
                                 )
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                                    visibles.forEach { publicacion ->
+                                        PublicacionCard(
+                                            publicacion = publicacion,
+                                            onClick = { onAbrirDetalle(publicacion.id) },
+                                            onFavorita = { viewModel.alternarFavorita(publicacion.id) },
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 7.dp)
+                                        )
+                                    }
+                                    LineaEstado(aviso = aviso)
+                                }
                             }
                         }
-                    } else {
-                        items(visibles, key = { it.id }) { publicacion ->
-                            PublicacionCard(
-                                publicacion = publicacion,
-                                onClick = { onAbrirDetalle(publicacion.id) },
-                                onFavorita = { viewModel.alternarFavorita(publicacion.id) },
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 7.dp)
-                            )
-                        }
-                        item { LineaEstado(aviso = aviso) }
                     }
                 }
             }
         }
 
-        ExtendedFloatingActionButton(
-            onClick = { onCrear(comunidad) },
-            icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-            text = { Text("Nueva publicación", fontWeight = FontWeight.Bold) },
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
+        AnimatedVisibility(
+            visible = isScrollingUp,
+            enter = scaleIn() + fadeIn(),
+            exit = scaleOut() + fadeOut(),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
                 .navigationBarsPadding()
-        )
+        ) {
+            ExtendedFloatingActionButton(
+                onClick = { onCrear(comunidad) },
+                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                text = { Text("Nueva publicación", fontWeight = FontWeight.Bold) },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        }
     }
 }
 

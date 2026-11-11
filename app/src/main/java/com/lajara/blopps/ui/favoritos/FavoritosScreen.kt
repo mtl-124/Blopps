@@ -1,5 +1,10 @@
 package com.lajara.blopps.ui.favoritos
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +28,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lajara.blopps.ui.UiState
-import com.lajara.blopps.ui.components.CargandoView
+import com.lajara.blopps.ui.components.CargandoShimmer
 import com.lajara.blopps.ui.components.PublicacionCard
 import com.lajara.blopps.ui.components.VacioView
 import com.lajara.blopps.ui.theme.BloppsDorado
@@ -53,33 +58,40 @@ fun FavoritosScreen(
             )
         }
         Box(modifier = Modifier.weight(1f)) {
-            when (val actual = estado) {
-                is UiState.Cargando -> CargandoView()
-                is UiState.Vacio -> VacioView(
-                    titulo = "Aún no tienes favoritos",
-                    descripcion = "Toca el corazón de una reseña para guardarla aquí",
-                    icono = Icons.Filled.FavoriteBorder
-                )
-                is UiState.Error -> VacioView(
-                    titulo = actual.mensaje,
-                    descripcion = "No se pudieron cargar tus favoritos",
-                    icono = Icons.Filled.FavoriteBorder
-                )
-                is UiState.Exito -> LazyColumn(
-                    contentPadding = PaddingValues(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 4.dp,
-                        bottom = 24.dp
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    items(actual.data, key = { it.id }) { publicacion ->
-                        PublicacionCard(
-                            publicacion = publicacion,
-                            onClick = { onAbrirDetalle(publicacion.id) },
-                            onFavorita = { viewModel.quitar(publicacion.id) }
-                        )
+            AnimatedContent(
+                targetState = estado,
+                transitionSpec = { fadeIn(animationSpec = tween(250)) togetherWith fadeOut(animationSpec = tween(250)) },
+                label = "favoritos_anim"
+            ) { actual ->
+                when (actual) {
+                    is UiState.Cargando -> CargandoShimmer()
+                    is UiState.Vacio -> VacioView(
+                        titulo = "Aún no tienes favoritos",
+                        descripcion = "Toca el corazón de una reseña para guardarla aquí",
+                        icono = Icons.Filled.FavoriteBorder
+                    )
+                    is UiState.Error -> VacioView(
+                        titulo = actual.mensaje,
+                        descripcion = "No se pudieron cargar tus favoritos",
+                        icono = Icons.Filled.FavoriteBorder
+                    )
+                    is UiState.Exito -> LazyColumn(
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 4.dp,
+                            bottom = 24.dp
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        items(actual.data, key = { it.id }) { publicacion ->
+                            PublicacionCard(
+                                publicacion = publicacion,
+                                onClick = { onAbrirDetalle(publicacion.id) },
+                                onFavorita = { viewModel.quitar(publicacion.id) },
+                                modifier = Modifier.animateItem()
+                            )
+                        }
                     }
                 }
             }

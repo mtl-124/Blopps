@@ -1,5 +1,14 @@
 package com.lajara.blopps.ui.navigation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -145,7 +154,12 @@ private fun PrincipalScreen(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            if (rutaActual != Rutas.DETALLE && !rutaActual.orEmpty().startsWith("crear") && !rutaActual.orEmpty().startsWith("usuario")) {
+            val mostrarBarra = rutaActual != Rutas.DETALLE && !rutaActual.orEmpty().startsWith("crear") && !rutaActual.orEmpty().startsWith("usuario")
+            AnimatedVisibility(
+                visible = mostrarBarra,
+                enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(200)) + fadeIn(animationSpec = tween(200)),
+                exit = slideOutVertically(targetOffsetY = { it }, animationSpec = tween(200)) + fadeOut(animationSpec = tween(200))
+            ) {
                 BarraInferior(
                     destinos = destinos,
                     rutaActual = rutaActual,
@@ -159,7 +173,13 @@ private fun PrincipalScreen(
             startDestination = Rutas.INICIO,
             modifier = Modifier.padding(relleno)
         ) {
-            composable(Rutas.INICIO) {
+            composable(
+                route = Rutas.INICIO,
+                enterTransition = { fadeIn(animationSpec = tween(200)) },
+                exitTransition = { fadeOut(animationSpec = tween(200)) },
+                popEnterTransition = { fadeIn(animationSpec = tween(200)) },
+                popExitTransition = { fadeOut(animationSpec = tween(200)) }
+            ) {
                 val viewModel: PublicacionesViewModel =
                     viewModel(factory = container.viewModelFactory)
                 ComunidadesScreen(
@@ -171,7 +191,11 @@ private fun PrincipalScreen(
             }
             composable(
                 route = Rutas.CREAR,
-                arguments = listOf(navArgument("comunidad") { type = NavType.StringType; nullable = true; defaultValue = null })
+                arguments = listOf(navArgument("comunidad") { type = NavType.StringType; nullable = true; defaultValue = null }),
+                enterTransition = { slideInHorizontally(initialOffsetX = { it / 4 }, animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeIn(animationSpec = tween(300)) },
+                exitTransition = { slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeOut(animationSpec = tween(300)) },
+                popEnterTransition = { slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeIn(animationSpec = tween(300)) },
+                popExitTransition = { slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeOut(animationSpec = tween(300)) }
             ) { entry ->
                 val comunidadStr = entry.arguments?.getString("comunidad")
                 val comunidadInicial = comunidadStr?.let { s -> Comunidad.entries.firstOrNull { it.name == s } }
@@ -186,7 +210,11 @@ private fun PrincipalScreen(
             }
             composable(
                 route = Rutas.DETALLE_USUARIO,
-                arguments = listOf(navArgument("id") { type = NavType.StringType })
+                arguments = listOf(navArgument("id") { type = NavType.StringType }),
+                enterTransition = { slideInHorizontally(initialOffsetX = { it / 4 }, animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeIn(animationSpec = tween(300)) },
+                exitTransition = { slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeOut(animationSpec = tween(300)) },
+                popEnterTransition = { slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeIn(animationSpec = tween(300)) },
+                popExitTransition = { slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeOut(animationSpec = tween(300)) }
             ) { entry ->
                 val id = entry.arguments?.getString("id").orEmpty()
                 val viewModel: DetallePublicacionUsuarioViewModel =
@@ -203,7 +231,11 @@ private fun PrincipalScreen(
             }
             composable(
                 route = Rutas.DETALLE,
-                arguments = listOf(navArgument("id") { type = NavType.IntType })
+                arguments = listOf(navArgument("id") { type = NavType.IntType }),
+                enterTransition = { slideInHorizontally(initialOffsetX = { it / 4 }, animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeIn(animationSpec = tween(300)) },
+                exitTransition = { slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeOut(animationSpec = tween(300)) },
+                popEnterTransition = { slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeIn(animationSpec = tween(300)) },
+                popExitTransition = { slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeOut(animationSpec = tween(300)) }
             ) { argumentos ->
                 val id = argumentos.arguments?.getInt("id") ?: 0
                 val viewModel: DetalleViewModel =
@@ -218,19 +250,37 @@ private fun PrincipalScreen(
                     onAtras = { navController.popBackStack() }
                 )
             }
-            composable(Rutas.FAVORITOS) {
+            composable(
+                route = Rutas.FAVORITOS,
+                enterTransition = { fadeIn(animationSpec = tween(200)) },
+                exitTransition = { fadeOut(animationSpec = tween(200)) },
+                popEnterTransition = { fadeIn(animationSpec = tween(200)) },
+                popExitTransition = { fadeOut(animationSpec = tween(200)) }
+            ) {
                 val viewModel: FavoritosViewModel =
                     viewModel(factory = container.viewModelFactory)
                 FavoritosScreen(viewModel = viewModel, onAbrirDetalle = abrirDetalle)
             }
-            composable(Rutas.PANEL) {
+            composable(
+                route = Rutas.PANEL,
+                enterTransition = { fadeIn(animationSpec = tween(200)) },
+                exitTransition = { fadeOut(animationSpec = tween(200)) },
+                popEnterTransition = { fadeIn(animationSpec = tween(200)) },
+                popExitTransition = { fadeOut(animationSpec = tween(200)) }
+            ) {
                 if (sesion.rol == Rol.ADMIN) {
                     val viewModel: AdminViewModel =
                         viewModel(factory = container.viewModelFactory)
                     AdminScreen(viewModel = viewModel)
                 }
             }
-            composable(Rutas.PERFIL) {
+            composable(
+                route = Rutas.PERFIL,
+                enterTransition = { fadeIn(animationSpec = tween(200)) },
+                exitTransition = { fadeOut(animationSpec = tween(200)) },
+                popEnterTransition = { fadeIn(animationSpec = tween(200)) },
+                popExitTransition = { fadeOut(animationSpec = tween(200)) }
+            ) {
                 val viewModel: PerfilViewModel =
                     viewModel(factory = container.viewModelFactory)
                 PerfilScreen(
