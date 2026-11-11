@@ -4,6 +4,7 @@ import com.lajara.blopps.data.repository.PublicacionRepository
 import com.lajara.blopps.domain.model.Comunidad
 import com.lajara.blopps.domain.model.Publicacion
 import com.lajara.blopps.notification.Notificador
+import com.lajara.blopps.domain.model.PublicacionPopular
 import com.lajara.blopps.ui.UiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,6 +36,8 @@ private class RepositorioFalso : PublicacionRepository {
     val datos = MutableStateFlow<List<Publicacion>>(emptyList())
     var remotas: List<Publicacion> = emptyList()
     var falla: Throwable? = null
+
+    override suspend fun masFavoritas(limite: Int): List<PublicacionPopular> = emptyList()
 
     override fun publicaciones(comunidad: Comunidad): Flow<List<Publicacion>> {
         return datos.map { lista -> lista.filter { it.comunidad == comunidad } }
