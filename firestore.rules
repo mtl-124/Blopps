@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Reglas para usuarios (lectura solo del propio documento y escritura prohibida, ya que el rol se asigna desde la consola)
+    match /usuarios/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Reglas para reseñas (lectura autenticada; create con autorUid == auth.uid y calificacion 1..5; delete del autor o admin; update prohibido)
+    match /resenas/{id} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.autorUid == request.auth.uid
+        && request.resource.data.calificacion is int
+        && request.resource.data.calificacion >= 1
+        && request.resource.data.calificacion <= 5;
+      allow delete: if request.auth != null
+        && (resource.data.autorUid == request.auth.uid
+            || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin');
+      allow update: if false;
+    }
+
+    // Reglas para publicaciones de usuarios creadas en la app
+    match /publicaciones_usuarios/{id} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.autorUid == request.auth.uid
+        && request.resource.data.calificacion is int
+        && request.resource.data.calificacion >= 1
+        && request.resource.data.calificacion <= 5
+        && request.resource.data.titulo is string
+        && request.resource.data.titulo.size() >= 3
+        && request.resource.data.titulo.size() <= 100
+        && request.resource.data.resena is string
+        && request.resource.data.resena.size() >= 10
+        && request.resource.data.resena.size() <= 1000;
+      allow delete: if request.auth != null
+        && (resource.data.autorUid == request.auth.uid
+            || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin');
+      allow update: if false;
+    }
+  }
+}
