@@ -57,6 +57,7 @@ import com.lajara.blopps.ui.detalle.DetallePublicacionUsuarioViewModel
 import com.lajara.blopps.ui.detalle.DetallePublicacionScreen
 import com.lajara.blopps.ui.detalle.DetalleViewModel
 import com.lajara.blopps.ui.detalle.ResenasViewModel
+import com.lajara.blopps.ui.detalle.SocialViewModel
 import com.lajara.blopps.ui.favoritos.FavoritosScreen
 import com.lajara.blopps.ui.favoritos.FavoritosViewModel
 import com.lajara.blopps.ui.login.LoginScreen
@@ -190,10 +191,13 @@ private fun PrincipalScreen(
                 val id = entry.arguments?.getString("id").orEmpty()
                 val viewModel: DetallePublicacionUsuarioViewModel =
                     viewModel(factory = container.viewModelFactory)
+                val socialViewModel: SocialViewModel =
+                    viewModel(factory = container.viewModelFactory)
                 DetallePublicacionUsuarioScreen(
                     sesion = sesion,
                     id = id,
                     viewModel = viewModel,
+                    socialViewModel = socialViewModel,
                     onAtras = { navController.popBackStack() }
                 )
             }

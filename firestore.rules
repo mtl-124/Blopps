@@ -40,6 +40,33 @@ service cloud.firestore {
         && (resource.data.autorUid == request.auth.uid
             || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin');
       allow update: if false;
+
+      // Subcolección comentarios
+      match /comentarios/{comentarioId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null
+          && request.resource.data.autorUid == request.auth.uid
+          && request.resource.data.texto is string
+          && request.resource.data.texto.size() >= 1
+          && request.resource.data.texto.size() <= 500;
+        allow delete: if request.auth != null
+          && (resource.data.autorUid == request.auth.uid
+              || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin');
+        allow update: if false;
+      }
+
+      // Subcolección votos
+      match /votos/{uid} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == uid
+          && (request.resource == null || (request.resource.data.valor is int && request.resource.data.valor >= 1 && request.resource.data.valor <= 5));
+      }
+
+      // Subcolección likes
+      match /likes/{uid} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == uid;
+      }
     }
   }
 }

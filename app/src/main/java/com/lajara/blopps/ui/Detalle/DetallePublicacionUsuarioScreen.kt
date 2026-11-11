@@ -62,6 +62,7 @@ fun DetallePublicacionUsuarioScreen(
     sesion: Sesion,
     id: String,
     viewModel: DetallePublicacionUsuarioViewModel,
+    socialViewModel: SocialViewModel,
     onAtras: () -> Unit
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
@@ -203,8 +204,11 @@ fun DetallePublicacionUsuarioScreen(
 
                     Spacer(Modifier.height(24.dp))
 
-                    // ESPACIO PARA SECCIÓN SOCIAL (PASO 5)
-                    // TODO: Aquí se insertará la sección social en el Paso 5.
+                    SocialSeccion(
+                        publicacionId = pub.id,
+                        sesion = sesion,
+                        viewModel = socialViewModel
+                    )
                 }
             }
         }
