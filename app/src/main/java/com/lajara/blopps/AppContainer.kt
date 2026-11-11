@@ -4,19 +4,24 @@ import android.content.Context
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.google.firebase.auth.FirebaseAuth
 import com.lajara.blopps.data.auth.AuthRepository
 import com.lajara.blopps.data.auth.FirebaseAuthRepository
 import com.lajara.blopps.data.local.AppDatabase
 import com.lajara.blopps.data.remote.RetrofitClient
+import com.lajara.blopps.data.repository.FirestoreResenaRepository
 import com.lajara.blopps.data.repository.PublicacionRepository
 import com.lajara.blopps.data.repository.PublicacionRepositoryImpl
+import com.lajara.blopps.data.repository.ResenaRepository
 import com.lajara.blopps.notification.Notificador
 import com.lajara.blopps.notification.NotificadorAndroid
 import com.lajara.blopps.ui.admin.AdminViewModel
 import com.lajara.blopps.ui.comunidades.PublicacionesViewModel
 import com.lajara.blopps.ui.detalle.DetalleViewModel
+import com.lajara.blopps.ui.detalle.ResenasViewModel
 import com.lajara.blopps.ui.favoritos.FavoritosViewModel
 import com.lajara.blopps.ui.login.LoginViewModel
+import com.lajara.blopps.ui.perfil.PerfilViewModel
 
 class AppContainer(context: Context) {
 
@@ -29,14 +34,25 @@ class AppContainer(context: Context) {
     private val baseDeDatos: AppDatabase by lazy { AppDatabase.crear(appContext) }
 
     val publicacionRepository: PublicacionRepository by lazy {
-        PublicacionRepositoryImpl(RetrofitClient.publicaciones, baseDeDatos.publicacionDao())
+        PublicacionRepositoryImpl(
+            api = RetrofitClient.publicaciones,
+            peliculasApi = RetrofitClient.peliculas,
+            dao = baseDeDatos.publicacionDao(),
+            uidActual = { FirebaseAuth.getInstance().currentUser?.uid }
+        )
     }
+
+
+
+    val resenaRepository: ResenaRepository by lazy { FirestoreResenaRepository() }
 
     val viewModelFactory: ViewModelProvider.Factory = viewModelFactory {
         initializer { LoginViewModel(authRepository) }
         initializer { PublicacionesViewModel(publicacionRepository, notificador) }
         initializer { DetalleViewModel(publicacionRepository) }
+        initializer { ResenasViewModel(resenaRepository) }
         initializer { FavoritosViewModel(publicacionRepository) }
         initializer { AdminViewModel(publicacionRepository, notificador) }
+        initializer { PerfilViewModel(authRepository, publicacionRepository) }
     }
 }
